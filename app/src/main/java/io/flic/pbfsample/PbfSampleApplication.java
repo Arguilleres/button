@@ -45,9 +45,6 @@ public class PbfSampleApplication extends Application {
 	}
 
 
-
-
-
 	public void listenToButtonWithToast(FlicButton button) {
 		button.addEventListener(new FlicButtonAdapter() {
 			@Override
