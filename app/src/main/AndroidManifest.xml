@@ -2,9 +2,11 @@
 <manifest package="io.flic.pbfsample"
           xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-feature android:name="android.hardware.location.gps" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <application
         android:name=".PbfSampleApplication"
         android:allowBackup="true"

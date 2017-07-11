@@ -1,10 +1,13 @@
 package io.flic.pbfsample;
 
 import android.content.IntentSender;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -23,6 +26,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -36,6 +41,8 @@ import io.flic.poiclib.FlicButtonListener;
 import io.flic.poiclib.FlicButtonMode;
 import io.flic.poiclib.FlicManager;
 import io.flic.poiclib.FlicScanWizard;
+
+import static io.flic.pbfsample.R.id.button;
 
 public class MainActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -53,11 +60,15 @@ public class MainActivity extends AppCompatActivity implements
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		for (FlicButton button : FlicManager.getManager().getKnownButtons()) {
-			setupEventListenerForButtonInActivity(button);
-		}
+		for (FlicButton button : FlicManager.getManager().getKnownButtons()){
+            setupEventListenerForButtonInActivity(button);}
+        PhoneCallListener phoneListener = new PhoneCallListener();
+        TelephonyManager telephonyManager = (TelephonyManager) this
+                .getSystemService(Context.TELEPHONY_SERVICE);
+        telephonyManager.listen(phoneListener, PhoneStateListener.LISTEN_CALL_STATE);
 
-		mGoogleApiClient = new GoogleApiClient.Builder(this)
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
 				.addConnectionCallbacks(this)
 				.addOnConnectionFailedListener(this)
 				.addApi(LocationServices.API)
@@ -66,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements
 				.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
 				.setInterval(10 * 1000)        // 10 seconds, in milliseconds
 				.setFastestInterval(1 * 1000); // 1 second, in milliseconds
+
 	}
 
 
@@ -193,4 +205,77 @@ public class MainActivity extends AppCompatActivity implements
 	public void onLocationChanged(Location location) {
 		handleNewLocation(location);
 	}
+
+    public void listenToButtonWithToast(FlicButton button, final Location location) {
+        button.addEventListener(new FlicButtonAdapter() {
+            @Override
+            public void onButtonUpOrDown(FlicButton button, boolean wasQueued, int timeDiff, boolean isUp, boolean isDown) {
+                if (isDown) {
+                    Log.d(TAG, location.toString());
+
+                    double currentLatitude = location.getLatitude();
+                    double currentLongitude = location.getLongitude();
+                    LatLng latLng = new LatLng(currentLatitude, currentLongitude);
+                    TextView username = (TextView) findViewById(R.id.textView2);
+                    username.setText("Current loc is " + latLng);
+
+                    TextView number = (TextView) findViewById(R.id.number);
+
+                    Intent callIntent = new Intent(Intent.ACTION_CALL);
+                    callIntent.setData(Uri.parse(String.valueOf(number)));
+                    startActivity(callIntent);
+
+
+
+
+                }
+            }
+        });
+    }
+
+    private class PhoneCallListener extends PhoneStateListener {
+
+        private boolean isPhoneCalling = false;
+
+        String LOG_TAG = "LOGGING 123";
+
+        @Override
+        public void onCallStateChanged(int state, String incomingNumber) {
+
+            if (TelephonyManager.CALL_STATE_RINGING == state) {
+                // phone ringing
+                Log.i(LOG_TAG, "RINGING, number: " + incomingNumber);
+            }
+
+            if (TelephonyManager.CALL_STATE_OFFHOOK == state) {
+                // active
+                Log.i(LOG_TAG, "OFFHOOK");
+
+                isPhoneCalling = true;
+            }
+
+            if (TelephonyManager.CALL_STATE_IDLE == state) {
+                // run when class initial and phone call ended,
+                // need detect flag from CALL_STATE_OFFHOOK
+                Log.i(LOG_TAG, "IDLE");
+
+                if (isPhoneCalling) {
+
+                    Log.i(LOG_TAG, "restart app");
+
+                    // restart app
+                    Intent i = getBaseContext().getPackageManager()
+                            .getLaunchIntentForPackage(
+                                    getBaseContext().getPackageName());
+                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(i);
+
+                    isPhoneCalling = false;
+                }
+
+            }
+        }
+    }
+
 }
+
