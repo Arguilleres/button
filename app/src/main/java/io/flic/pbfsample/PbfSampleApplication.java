@@ -6,7 +6,13 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
+import android.view.LayoutInflater;
+import android.widget.TextView;
+import android.view.View;
 import android.widget.Toast;
+
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,9 +34,11 @@ import io.flic.poiclib.*;
 
 public class PbfSampleApplication extends Application {
 	public static final String TAG = "PbfSampleApplication";
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
+
 
 		startService(new Intent(this.getApplicationContext(), PbfSampleService.class));
 
@@ -50,9 +58,20 @@ public class PbfSampleApplication extends Application {
 			@Override
 			public void onButtonUpOrDown(FlicButton button, boolean wasQueued, int timeDiff, boolean isUp, boolean isDown) {
 				if (isDown) {
+
+
+					View v = LayoutInflater.inflate(R.layout.activity_main);
+					View innerView = v.findViewById(R.id.number);
+
 					Toast.makeText(getApplicationContext(), "Button " + button + " was pressed", Toast.LENGTH_SHORT).show();
+					Intent callIntent = new Intent(Intent.ACTION_CALL);
+					callIntent.setData(Uri.parse("tel:017702329065"));
+					startActivity(callIntent);
+
+
 				}
 			}
 		});
 	}
 }
+

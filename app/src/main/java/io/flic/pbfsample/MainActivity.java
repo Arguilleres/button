@@ -78,6 +78,8 @@ public class MainActivity extends AppCompatActivity implements
 				.setInterval(10 * 1000)        // 10 seconds, in milliseconds
 				.setFastestInterval(1 * 1000); // 1 second, in milliseconds
 
+
+
 	}
 
 
@@ -206,32 +208,6 @@ public class MainActivity extends AppCompatActivity implements
 		handleNewLocation(location);
 	}
 
-    public void listenToButtonWithToast(FlicButton button, final Location location) {
-        button.addEventListener(new FlicButtonAdapter() {
-            @Override
-            public void onButtonUpOrDown(FlicButton button, boolean wasQueued, int timeDiff, boolean isUp, boolean isDown) {
-                if (isDown) {
-                    Log.d(TAG, location.toString());
-
-                    double currentLatitude = location.getLatitude();
-                    double currentLongitude = location.getLongitude();
-                    LatLng latLng = new LatLng(currentLatitude, currentLongitude);
-                    TextView username = (TextView) findViewById(R.id.textView2);
-                    username.setText("Current loc is " + latLng);
-
-                    TextView number = (TextView) findViewById(R.id.number);
-
-                    Intent callIntent = new Intent(Intent.ACTION_CALL);
-                    callIntent.setData(Uri.parse(String.valueOf(number)));
-                    startActivity(callIntent);
-
-
-
-
-                }
-            }
-        });
-    }
 
     private class PhoneCallListener extends PhoneStateListener {
 
