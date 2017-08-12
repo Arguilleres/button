@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.telephony.PhoneStateListener;
+import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
@@ -30,8 +31,11 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -55,11 +59,15 @@ public class MainActivity extends AppCompatActivity implements
 	public static final String TAG = MainActivity.class.getSimpleName();
 	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 	private LocationRequest mLocationRequest;
+	private EditText mEditText;
+	private FusedLocationProviderClient mFusedLocationClient;
+	private Location location;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		mEditText = (EditText)findViewById(R.id.number);
 		for (FlicButton button : FlicManager.getManager().getKnownButtons()){
             setupEventListenerForButtonInActivity(button);}
         PhoneCallListener phoneListener = new PhoneCallListener();
@@ -68,18 +76,24 @@ public class MainActivity extends AppCompatActivity implements
         telephonyManager.listen(phoneListener, PhoneStateListener.LISTEN_CALL_STATE);
 
 
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
+        /*mGoogleApiClient = new GoogleApiClient.Builder(this)
 				.addConnectionCallbacks(this)
 				.addOnConnectionFailedListener(this)
 				.addApi(LocationServices.API)
-				.build();
+				.build();*/
 		mLocationRequest = LocationRequest.create()
 				.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
 				.setInterval(10 * 1000)        // 10 seconds, in milliseconds
-				.setFastestInterval(1 * 1000); // 1 second, in milliseconds
-
-
-
+				.setFastestInterval(1 * 1000); // 1 second, in milliseconds*
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+		mFusedLocationClient.requestLocationUpdates(mLocationRequest, new LocationCallback(){
+			@Override
+			public void onLocationResult(LocationResult locationResult) {
+				for (Location location: locationResult.getLocations()) {
+					handleNewLocation(location);
+				}
+			}
+		}, null);
 	}
 
 
@@ -102,6 +116,21 @@ public class MainActivity extends AppCompatActivity implements
 			@Override
 			public void onButtonUpOrDown(FlicButton button, boolean wasQueued, int timeDiff, boolean isUp, boolean isDown) {
 				((TextView)findViewById(R.id.textView)).setText(isUp ? "Up" : "Down");
+				Toast.makeText(MainActivity.this, "Mobile Number - " + mEditText.getText().toString(), Toast.LENGTH_SHORT).show();
+				String locationMsg = "My location is " +
+						(location == null ?
+								" N/A" :
+								"Lat: " + location.getLongitude() + " & Long: " + location.getLongitude()
+						);
+				Uri mNo = Uri.parse("tel:" + mEditText.getText().toString());
+				SmsManager.getDefault().sendTextMessage(mEditText.getText().toString(),null,locationMsg,null,null);
+				//Intent msgIntent = new Intent(Intent.ACTION_SENDTO, mNo);
+				//msgIntent.putExtra("sms_body", locationMsg);
+				//startActivity(msgIntent);
+
+				Intent callIntent = new Intent(Intent.ACTION_CALL);
+				callIntent.setData(mNo);
+				startActivity(callIntent);
 			}
 		};
 		button.addEventListener(listener);
@@ -148,15 +177,15 @@ public class MainActivity extends AppCompatActivity implements
 
 	protected void onResume (){
 		super.onResume();
-		mGoogleApiClient.connect();
+		// mGoogleApiClient.connect();
 	}
 
 	protected void onPause() {
 		super.onPause();
-		if (mGoogleApiClient.isConnected()) {
+		/*if (mGoogleApiClient.isConnected()) {
 			LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
 			mGoogleApiClient.disconnect();
-		}
+		}*/
 	}
 
 	@Override
@@ -171,12 +200,13 @@ public class MainActivity extends AppCompatActivity implements
 	}
 
 	private void handleNewLocation(Location location) {
-		Log.d(TAG, location.toString());
-
+		this.location = location;
 		double currentLatitude = location.getLatitude();
 		double currentLongitude = location.getLongitude();
 		LatLng latLng = new LatLng(currentLatitude, currentLongitude);
 		TextView username = (TextView) findViewById(R.id.textView2);
+		Toast.makeText(this, "Current Location - lat: " + location.getLatitude() + " | long: " + location.getLongitude(), Toast.LENGTH_SHORT).show();
+		Log.i(TAG,  "Current Location - lat: " + location.getLatitude() + " | long: " + location.getLongitude());
 		username.setText("Current loc is " + latLng);
 
 

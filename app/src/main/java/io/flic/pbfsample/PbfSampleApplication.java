@@ -58,15 +58,15 @@ public class PbfSampleApplication extends Application {
 			@Override
 			public void onButtonUpOrDown(FlicButton button, boolean wasQueued, int timeDiff, boolean isUp, boolean isDown) {
 				if (isDown) {
+					LayoutInflater inflater = LayoutInflater.from(PbfSampleApplication.this);
+					View v = inflater.inflate(R.layout.activity_main, null);
+					EditText innerView = (EditText)v.findViewById(R.id.number);
+					String actualnum="tel:"+innerView.getText().toString();
 
-
-					View v = LayoutInflater.inflate(R.layout.activity_main);
-					View innerView = v.findViewById(R.id.number);
-
-					Toast.makeText(getApplicationContext(), "Button " + button + " was pressed", Toast.LENGTH_SHORT).show();
-					Intent callIntent = new Intent(Intent.ACTION_CALL);
-					callIntent.setData(Uri.parse("tel:017702329065"));
-					startActivity(callIntent);
+					//Toast.makeText(getApplicationContext(), "Button " + button + " was pressed", Toast.LENGTH_SHORT).show();
+					//Intent callIntent = new Intent(Intent.ACTION_CALL);
+					//callIntent.setData(Uri.parse(actualnum));
+					//startActivity(callIntent);
 
 
 				}
